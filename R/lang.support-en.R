@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Meik Michalke <meik.michalke@hhu.de>
+# Copyright 2010-2020 Meik Michalke <meik.michalke@hhu.de>
 #
 # This file is part of the R package koRpus.lang.en.
 #
@@ -61,25 +61,25 @@ lang.support.en <- function(...) {
       lang="en",
       encoding="UTF-8",
       preset=function(TT.cmd, TT.bin, TT.lib, unix.OS){
+        TT.tokenizer    <- file.path(TT.cmd, "utf8-tokenize.perl")
         TT.abbrev       <- file.path(TT.lib, "english-abbreviations")
-        TT.lexicon      <- file.path(TT.lib, "english-lexicon.txt")
         TT.filter       <- "perl -pe 's/\\tV[BDHV]/\\tVB/;s/IN\\/that/\\tIN/;'"
-        TT.lookup       <- file.path(TT.cmd, "lookup.perl")
+        TT.params       <- file.path(TT.lib, "english.par")
         # TT.tokenizer TT.tknz.opts "|" TT.lookup.command TT.tagger TT.opts TT.params TT.filter.command
         if(isTRUE(unix.OS)){
           # preset for unix systems
           return(
             list(
-              TT.tokenizer      = file.path(TT.cmd, "utf8-tokenize.perl"),
+              TT.tokenizer      = TT.tokenizer,
               TT.tagger         = file.path(TT.bin, "tree-tagger"),
               TT.abbrev         = TT.abbrev,
-              TT.params         = file.path(TT.lib, "english-utf8.par"),
-              TT.lexicon        = TT.lexicon,
-              TT.lookup         = TT.lookup,
+              TT.params         = TT.params,
+              TT.lexicon        = c(),
+              TT.lookup         = c(),
               TT.filter         = TT.filter,
 
-              TT.tknz.opts      = paste("-e"),
-              TT.lookup.command = paste("perl", TT.lookup, TT.lexicon, "|"),
+              TT.tknz.opts      = "-e",
+              TT.lookup.command = c(),
               TT.filter.command = paste("|", TT.filter),
               TT.pre.tagger     = "grep -v '^$' |"
             )
@@ -88,15 +88,15 @@ lang.support.en <- function(...) {
           # preset for windows systems
           return(
             list(
-              TT.tokenizer      = file.path(TT.cmd, "utf8-tokenize.perl"),
+              TT.tokenizer      = TT.tokenizer,
               TT.tagger         = file.path(TT.bin, "tree-tagger.exe"),
               TT.abbrev         = TT.abbrev,
-              TT.params         = file.path(TT.lib, "english-utf8.par"),
+              TT.params         = TT.params,
               TT.lexicon        = c(),
               TT.lookup         = c(),
               TT.filter         = TT.filter,
 
-              TT.tknz.opts      = paste("-e -a", TT.abbrev),
+              TT.tknz.opts      = "-e",
               TT.lookup.command = c(),
               TT.filter.command = paste("|", TT.filter),
               TT.pre.tagger     = c()
@@ -174,8 +174,9 @@ lang.support.en <- function(...) {
         #"PRP", "pronoun", "Personal pronoun", # contradicts BNC tag, see below!
         "PRP$", "pronoun", "Possessive pronoun",
         ## BNC tags
-        "AJ0", "adjective", "Adjective, comparative",
-        "AJC", "adjective", "Adjective, superlative",
+        "AJ0", "adjective", "Adjective, general or positive",
+        "AJC", "adjective", "Adjective, comparative",
+        "AJS", "adjective", "Adjective, superlative",
         "AT0", "article", "Article, which typically begins a noun phrase", # includes no
         "AV0", "adverb", "Adverb  not subclassified as AVP or AVQ", # N.B. Unlike,adverbs  adjectives, are not tagged
           # as positive, comparative, or superlative. This is because of the relative rarity of comparative and
@@ -246,7 +247,23 @@ lang.support.en <- function(...) {
         "VVN", "verb", "Past participle form of lexical verbs",
         "VVZ", "verb", "3rd person singular present (-s form) of lexical verbs",
         "XX0", "negation", "Negative particle not or n\'t",
-        "ZZ0", "letter", "Alphabetical symbols, e.g. A, a, B, b, c, d"
+        "ZZ0", "letter", "Alphabetical symbols, e.g. A, a, B, b, c, d",
+         # abiguity tags
+        "AJ0-AV0", "ambiguous", "Adjective, general or positive/Adverb  not subclassified as AVP or AVQ (ambiguity tag)",
+        "AJ0-VVN", "ambiguous", "Adjective, general or positive/Past participle form of lexical verbs (ambiguity tag)",
+        "AJ0-VVD", "ambiguous", "Adjective, general or positive/Past tense form of lexical verbs (ambiguity tag)",
+        "AJ0-NN1", "ambiguous", "Adjective, general or positive/Singular common noun (ambiguity tag)",
+        "AJ0-VVG", "ambiguous", "Adjective, general or positive/Gerund or present participle (-ing form) of lexical verbs (ambiguity tag)",
+        "AVP-PRP", "ambiguous", "Adverb particle/Preposition, except of (ambiguity tag)",
+        "AVQ-CJS", "ambiguous", "Wh-adverb/Subordinating conjunction (ambiguity tag)",
+        "CJS-PRP", "ambiguous", "Subordinating conjunction/Preposition, except of (ambiguity tag)",
+        "CJT-DT0", "ambiguous", "The subordinating conjunction that/General determiner (ambiguity tag)",
+        "CRD-PNI", "ambiguous", "Cardinal number/Indefinite pronoun (ambiguity tag)",
+        "NN1-NP0", "ambiguous", "Singular common noun/Proper noun (ambiguity tag)",
+        "NN1-VVB", "ambiguous", "Singular common noun/Finite base form of lexical verbs (ambiguity tag)",
+        "NN1-VVG", "ambiguous", "Singular common noun/Gerund or present participle (-ing form) of lexical verbs (ambiguity tag)",
+        "NN2-VVZ", "ambiguous", "Plural common noun/Verb, 3rd person singular present (-s form) of HAVE, has, \'s (ambiguity tag)",
+        "VVD-VVN", "ambiguous", "Past tense form of lexical verbs/Past participle form of lexical verbs (ambiguity tag)"
         ), ncol=3, byrow=TRUE, dimnames=list(c(),c("tag","wclass","desc"))),
       tag.class.def.punct=matrix(c(
         ",", "comma", "Comma", # not in guidelines
